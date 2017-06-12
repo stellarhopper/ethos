@@ -1,0 +1,23 @@
+Connections
+-----------
+
+CH1 - all connected together - 'data' - SPI1 SCLK - pi pin 40 - Wpi 29
+CH2:
+Rx - pin - Name 	  - wiringPi pin
+1 - 36 - BCM16, SPI1 CE2  - 27
+2 - 33 - BCM13		  - 23
+3 - 35 - BCM19, SPI1 MISO - 24
+4 - 37 - BCM26		  - 25
+5 - 29 - BCM5		  - 21
+6 - 31 - BCM6		  - 22
+7 - 32 - BCM12		  - 26
+8 - 15 - BCM22		  - 3
+CH3 - all connected together - 'clk' - SPI1 MOSI - pi pin 38 Wpi 28
+
+We can't use the pi's SPI1 lines because CLK and MOSI are swapped.
+This interface needs to be bitbanged (alternatively use spi-gpio,
+the kernels bitbang SPI implementation - but this seems to need
+messing around with devicetree, so not going this route for now).
+
+In any case, Pi's SPI1 port will only provide two CE lines, and we
+need eight.

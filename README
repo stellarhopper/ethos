@@ -1,0 +1,48 @@
+Project 'Ethos'
+===============
+
+'Ethos' plausibly stands for Event Tracker's Home of Open Source.
+It is a standalone, open implementation of software that can run on the
+Raspberry Pi in a TBS Event Tracker Unit.
+
+It does not aim to be a full race management solution - there is plenty of
+software that already does this well. A future goal is developing an open
+communication protocol that will enable this and other similar projects to
+plug-and-play with existing software like LiveTime.
+
+
+Setup Instructions
+==================
+
+1. Remove and safely store the original SD card somewhere :)
+2. Install Raspbian on a fresh SD card, and insert it into the pi.
+3. SSH into it, use apt-get upgrade to get the latest latest everything.
+4. apt-get install git
+5. Install wiringPi: http://wiringpi.com/download-and-install/
+6. Clone this project.
+7. Build and install it (See build instructions)
+8. TBD
+
+
+External API
+============
+
+Project Ethos will implement an external API to interface with race
+management software such as LiveTime or LapSync. The API specification
+can be found at:
+
+https://docs.google.com/document/d/1D5yCGpIkbBpzdl4mpx3iea8zwjxu2KJ4rXSG3jj_mGA/edit?usp=sharing
+
+
+Contributing
+============
+
+Github pull requests are welcome. Make an issue to discuss a feature
+or its implementation details before starting on something major
+if you'd like.
+
+If you'd rather not use Github, emailed patches are fine too.
+
+We follow the Linux kernel coding style, which can be found at:
+https://github.com/torvalds/linux/blob/master/Documentation/process/coding-style.rst
+(The parts that are applicable of course).

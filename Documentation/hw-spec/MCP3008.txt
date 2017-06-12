@@ -1,0 +1,17 @@
+ADC chip for RSSI - MCP3008
+https://www.adafruit.com/product/856
+
+MCP3008 Connections:
+
+Inputs
+IN0-7 == Rx 0-7 RSSI pin
+
+Other pins (PI 40pin connector pin number, pi pin name)
+Vdd = 3v3
+Vref = 3v3
+AGND = GND
+CLK = 23 SPI0 SCLK
+Dout = 21 SPI0 MISO
+Din = 19 SPI0 MOSI
+CS/SHDN = 24 SPI0 CE0
+DGND = GND
