@@ -6,13 +6,16 @@ It is a standalone, open implementation of software that can run on the
 Raspberry Pi in a TBS Event Tracker Unit.
 
 It does not aim to be a full race management solution - there is plenty of
-software that already does this well. A future goal is developing an open
-communication protocol that will enable this and other similar projects to
-plug-and-play with existing software like LiveTime.
+software that already does this well. An open communication protocol will
+enable communication with race management software like Livetime.
 
 
 Setup Instructions
 ==================
+
+NOTE: This project is a work in progress. It is not yet ready to be a
+complete replacement for the ET software. This notice will be updated
+and a tagged release will be created once it is ready for broader testing.
 
 1. Remove and safely store the original SD card somewhere :)
 2. Install Raspbian on a fresh SD card, and insert it into the pi.
