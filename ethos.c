@@ -29,6 +29,7 @@
 #include <linux/spi/spidev.h>
 
 #include "ethos.h"
+#include "queue.h"
 #include "spi_bitbang.h"
 
 #define BASE 100
@@ -174,17 +175,23 @@ int main(int argc, char *argv[])
 	if (rc)
 		goto out;
 
+	rc = queue_init(ctx);
+	if (rc)
+		goto out;
+
 	for (i = 0; i < NUM_RX; i++) {
 		rc = spibb_set_module_ch(i, ctx->settings.rx[i].freq);
 		if (rc != 0) {
 			printf("  failed to set rx %d: %d\n", i, rc);
-			goto out;
+			goto out_queue;
 		}
 	}
 
 	for (i = 0; i < 10; i++)
 		read_all_modules();
 
+out_queue:
+	queue_destroy(ctx);
 out:
 	free(ctx);
 	return rc;

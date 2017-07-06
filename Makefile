@@ -10,7 +10,7 @@ LIBS=-lm -lpthread -lwiringPi
 _DEPS = ethos.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = ethos.o spi_bitbang.o
+_OBJ = ethos.o spi_bitbang.o queue.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 

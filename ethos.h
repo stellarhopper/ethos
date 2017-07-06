@@ -22,6 +22,8 @@
 #define NUM_RX 8
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
+#define Q_ELEMENTS 64
+
 struct rssi_raw {
 	int rx[NUM_RX];
 	struct timespec ts;
@@ -41,6 +43,9 @@ struct global_settings {
 
 struct ethos_ctx {
 	struct global_settings settings;
+	struct rssi_raw *rssi_raw;
+	pthread_mutex_t q_lock;
+	int q_head;
 };
 
 #endif /* _ETHOS_H_ */
