@@ -20,14 +20,21 @@
 #include <linux/types.h>
 
 #define NUM_RX 8
+#define NUM_THREADS 4
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
 #define Q_ELEMENTS 64
 
+enum threads {
+	RSSI_READER = 0,
+	PASS_DETECTOR,
+	NET_HANDLER,
+	CMD_HANDLER,
+};
+
 struct rssi_raw {
 	int rx[NUM_RX];
-	struct timespec ts;
-	pthread_mutex_t lock;
+	struct timespec ts[NUM_RX];
 };
 
 struct rx_settings {
@@ -43,6 +50,7 @@ struct global_settings {
 
 struct ethos_ctx {
 	struct global_settings settings;
+	pthread_t threads[NUM_THREADS];
 	struct rssi_raw *rssi;
 	pthread_mutex_t q_lock;
 	int q_head;

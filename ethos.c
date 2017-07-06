@@ -10,6 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
  */
+#include <time.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
@@ -36,6 +37,27 @@
 #define SPI_CHAN 0
 #define CFG_MAX_LINE 64
 #define CFG_NUM_ELEMENTS 5
+
+static void print_ts(struct timespec *ts)
+{
+	printf("%lld.%.6ld", (long long)ts->tv_sec, ts->tv_nsec/1000);
+}
+
+#if 0
+static void ts_difference(struct timespec *start, struct timespec *stop,
+		struct timespec *result)
+{
+	if ((stop->tv_nsec - start->tv_nsec) < 0) {
+		result->tv_sec = stop->tv_sec - start->tv_sec - 1;
+		result->tv_nsec = stop->tv_nsec - start->tv_nsec + 1000000000;
+	} else {
+		result->tv_sec = stop->tv_sec - start->tv_sec;
+		result->tv_nsec = stop->tv_nsec - start->tv_nsec;
+	}
+
+	return;
+}
+#endif
 
 static struct ethos_ctx *init_ctx(void)
 {
@@ -118,17 +140,63 @@ static int read_module(uint8_t module)
 	return analogRead(BASE + module);
 }
 
-static void read_all_modules(void)
+static int read_all_modules(struct rssi_raw *rssi)
 {
-	int i, rssi[NUM_RX];
+	int i;
 
-	for (i = 0; i < NUM_RX; i++)
-		rssi[i] = read_module(i);
+	for (i = 0; i < NUM_RX; i++) {
+		rssi->rx[i] = read_module(i);
+		if (clock_gettime(CLOCK_REALTIME, &rssi->ts[i]) != 0)
+			return -errno;
+	}
+	return 0;
+}
 
-	printf("Got Module RSSIs:");
-	for (i = 0; i < NUM_RX; i++)
-		printf("%d, ", rssi[i]);
-	printf("\n");
+static void *rssi_thread(void *arg)
+{
+	struct ethos_ctx *ctx = arg;
+
+	while(1) {
+		struct rssi_raw *rssi;
+		int rc;
+
+		rssi = queue_get(ctx);
+		if (rssi == NULL) {
+			printf("Error: get_queue returned null (q_head = %d)\n",
+				ctx->q_head);
+			break;
+		}
+		rc = read_all_modules(rssi);
+		queue_put(ctx);
+		if (rc) {
+			printf("Error: read_all_modules: %d (q_head = %d)\n",
+				rc, ctx->q_head);
+			break;
+		}
+	}
+	pthread_exit(NULL);
+}
+
+static void *pass_thread(void *arg)
+{
+	struct ethos_ctx *ctx = arg;
+	int i = 0;
+
+	while(1) {
+		struct rssi_raw *rssi = &ctx->rssi[i];
+		int j;
+
+		printf("cur_head: %d: q[%d]->\n", ctx->q_head, i);
+		for (j = 0; j < NUM_RX; j++) {
+			printf("    rssi[%d] = %d, ts = ", j, rssi->rx[j]);
+			print_ts(&rssi->ts[j]);
+			printf("\n");
+		}
+
+		if (++i == Q_ELEMENTS)
+			i = 0;
+	}
+	pthread_exit(NULL);
 }
 
 static int init_hw_interfaces()
@@ -148,6 +216,52 @@ static int init_hw_interfaces()
 	spibb_setup();
 
 	return 0;
+}
+
+static int start_threads(struct ethos_ctx *ctx)
+{
+	int rc;
+	pthread_attr_t attr;
+
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+	rc = pthread_create(&ctx->threads[RSSI_READER], &attr, rssi_thread,
+	        (void *)ctx);
+	if (rc) {
+		printf("%s: Failed to create RSSI_READER thread: %d\n",
+			__func__, rc);
+		return rc;
+	}
+
+	rc = pthread_create(&ctx->threads[PASS_DETECTOR], &attr, pass_thread,
+	        (void *)ctx);
+	if (rc) {
+		printf("%s: Failed to create PASS_DETECTOR thread: %d\n",
+			__func__, rc);
+		return rc;
+	}
+
+	pthread_attr_destroy(&attr);
+
+	return 0;
+}
+
+static void wait_threads(struct ethos_ctx *ctx)
+{
+	int i, rc;
+	void *status;
+
+	for (i = 0; i < NUM_THREADS; i++) {
+		rc = pthread_join(ctx->threads[i], &status);
+		if (rc) {
+			printf("%s: pthread_join[%d] returned: %d\n",
+				__func__, i, rc);
+			return;
+		}
+		printf("%s: thread[%d]: joined with status %ld\n",
+			__func__, i, (long)status);
+	}
 }
 
 int main(int argc, char *argv[])
@@ -187,8 +301,11 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	for (i = 0; i < 10; i++)
-		read_all_modules();
+	rc = start_threads(ctx);
+	if (rc)
+		goto out_queue;
+
+	wait_threads(ctx);
 
 out_queue:
 	queue_destroy(ctx);
