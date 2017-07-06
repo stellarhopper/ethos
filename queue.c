@@ -19,8 +19,8 @@
 
 int queue_init(struct ethos_ctx *ctx)
 {
-	ctx->rssi_raw = calloc(Q_ELEMENTS, sizeof(struct rssi_raw));
-	if (!ctx->rssi_raw)
+	ctx->rssi = calloc(Q_ELEMENTS, sizeof(struct rssi_raw));
+	if (!ctx->rssi)
 		return -ENOMEM;
 
 	ctx->q_head = 0;
@@ -31,7 +31,7 @@ int queue_init(struct ethos_ctx *ctx)
 
 void queue_destroy(struct ethos_ctx *ctx)
 {
-	free(ctx->rssi_raw);
+	free(ctx->rssi);
 	pthread_mutex_destroy(&ctx->q_lock);
 }
 
@@ -41,7 +41,7 @@ struct rssi_raw *queue_get(struct ethos_ctx *ctx)
 		return NULL;
 	if ((++ctx->q_head) == Q_ELEMENTS)
 		ctx->q_head = 0;
-	return &ctx->rssi_raw[ctx->q_head];
+	return &ctx->rssi[ctx->q_head];
 }
 
 int queue_put(struct ethos_ctx *ctx)

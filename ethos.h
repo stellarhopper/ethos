@@ -43,7 +43,7 @@ struct global_settings {
 
 struct ethos_ctx {
 	struct global_settings settings;
-	struct rssi_raw *rssi_raw;
+	struct rssi_raw *rssi;
 	pthread_mutex_t q_lock;
 	int q_head;
 };
